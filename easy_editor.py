@@ -1,6 +1,9 @@
 import os
 from PyQt5.QtWidgets import *
- 
+from PyQt5.QtCore import Qt # потрібна константа Qt.KeepAspectRatio для зміни розмірів із збереженням пропорцій
+from PyQt5.QtGui import QPixmap # оптимізована для показу на екрані картинка
+from PIL import Image, ImageFilter
+
 #створюємо додаток та його вікно
 app = QApplication([])
 win = QWidget()      
@@ -38,6 +41,7 @@ row.addLayout(col1, 20)
 row.addLayout(col2, 80)
 
 win.setLayout(row)
+win.show()
 
 
 #глобальна змінна, яка зберігатиме шлях до обраної папки
@@ -65,11 +69,63 @@ def showFilenamesList():
    lw_files.clear()
    for filename in filenames:
       lw_files.addItem(filename)
+ 
+ 
+#Клас, який визначає основну логіку роботи фоторедактора
+class ImageProcessor():
+   def __init__(self):
+      self.image = None
+      self.dir = None
+      self.filename = None
+      self.save_dir = "Modified/"
+    
+   #метод для завантаження обраного користувачем зображення
+   def loadImage(self, dir, filename):
+      self.dir = dir
+      self.filename = filename
+      image_path = os.path.join(dir, filename)
+      self.image = Image.open(image_path)
+
+   #метод для накадання чорно-білого фільтру
+   def do_bw(self):
+      self.image = self.image.convert("L")
+      self.saveImage()
+      image_path = os.path.join(self.dir, self.save_dir, self.filename)
+      self.showImage(image_path)
+    
+   #метод, що зберігає оброблену копію оригінального зображення в підпапку
+   def saveImage(self):
+      path = os.path.join(self.dir, self.save_dir)
+      if not(os.path.exists(path) or os.path.isdir(path)):
+         os.mkdir(path)
+      image_path = os.path.join(path, self.filename)
+      self.image.save(image_path)
+    
+   #метод, який відображає зображення, що знаходиться за заданим шляхом path
+   def showImage(self, path):
+      lb_image.hide()
+      pixmapimage = QPixmap(path)
+      w, h = lb_image.width(), lb_image.height()
+      pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
+      lb_image.setPixmap(pixmapimage)
+      lb_image.show()
+
+
+#функція-обробник натискання на назву зображення у віджеті-списку (зчитує назву файлу, завантажує його та відкриває у фоторедакторі)
+def showChosenImage():
+   if lw_files.currentRow() >= 0:
+      filename = lw_files.currentItem().text()
+      workimage.loadImage(workdir, filename)
+      image_path = os.path.join(workimage.dir, workimage.filename)
+      workimage.showImage(image_path)
+ 
+#поточне робоче зображення для роботи
+workimage = ImageProcessor() 
 
 #підключаємо функції-обробники до відповідних віджетів
+lw_files.currentRowChanged.connect(showChosenImage)
 btn_dir.clicked.connect(showFilenamesList)
-
+btn_bw.clicked.connect(workimage.do_bw)
 
 #запускаємо обробку подій
-win.show()
 app.exec()
