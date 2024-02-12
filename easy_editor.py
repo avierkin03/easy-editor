@@ -1,5 +1,9 @@
 import os
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (
+   QApplication, QWidget, QFileDialog,QLabel, 
+   QPushButton, QListWidget,QHBoxLayout, QVBoxLayout
+)
+ 
 from PyQt5.QtCore import Qt # потрібна константа Qt.KeepAspectRatio для зміни розмірів із збереженням пропорцій
 from PyQt5.QtGui import QPixmap # оптимізована для показу на екрані картинка
 from PIL import Image, ImageFilter
@@ -92,6 +96,34 @@ class ImageProcessor():
       self.saveImage()
       image_path = os.path.join(self.dir, self.save_dir, self.filename)
       self.showImage(image_path)
+
+   #метод повороту зображення вліво на 90°
+   def do_left(self):
+      self.image = self.image.transpose(Image.ROTATE_90)
+      self.saveImage()
+      image_path = os.path.join(workdir, self.save_dir, self.filename)
+      self.showImage(image_path)
+    
+   #метод повороту зображення вправо на 90°
+   def do_right(self):
+      self.image = self.image.transpose(Image.ROTATE_270)
+      self.saveImage()
+      image_path = os.path.join(workdir, self.save_dir, self.filename)
+      self.showImage(image_path)
+    
+   #метод для віддзеркалення зображення
+   def do_flip(self):
+      self.image = self.image.transpose(Image.FLIP_LEFT_RIGHT)
+      self.saveImage()
+      image_path = os.path.join(workdir, self.save_dir, self.filename)
+      self.showImage(image_path)
+    
+   #метод для розмиття зображення
+   def do_sharpen(self):
+      self.image = self.image.filter(ImageFilter.BLUR)
+      self.saveImage()
+      image_path = os.path.join(workdir, self.save_dir, self.filename)
+      self.showImage(image_path)
     
    #метод, що зберігає оброблену копію оригінального зображення в підпапку
    def saveImage(self):
@@ -126,6 +158,10 @@ workimage = ImageProcessor()
 lw_files.currentRowChanged.connect(showChosenImage)
 btn_dir.clicked.connect(showFilenamesList)
 btn_bw.clicked.connect(workimage.do_bw)
+btn_left.clicked.connect(workimage.do_left)
+btn_right.clicked.connect(workimage.do_right)
+btn_flip.clicked.connect(workimage.do_flip)
+btn_sharp.clicked.connect(workimage.do_sharpen)
 
 #запускаємо обробку подій
 app.exec()
